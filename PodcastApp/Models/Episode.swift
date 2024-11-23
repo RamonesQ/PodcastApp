@@ -15,7 +15,7 @@ struct Episode: Codable, Identifiable {
     var duration: String
     var guid: String
     var audioURL: String
-    var imageURL: String
+    var imageURL: String?
     var season: Int
     var episodeNumber: Int
     var episodeType: String
