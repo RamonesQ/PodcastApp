@@ -39,7 +39,7 @@ struct HomeView: View {
                 }
                 
                 if !viewModel.cachedPodcasts.isEmpty {
-                    Text("Previously Loaded Podcasts")
+                    Text("Previous searches")
                         .font(.headline)
                         .padding(.top)
                     
@@ -63,19 +63,23 @@ struct HomeView: View {
                             }
                         }
                     }
-                    .frame(height: 200)
+                    .listStyle(PlainListStyle())
+                    .frame(height: 300)
                     
                     Button("Clear Cache") {
                         viewModel.clearCache()
                     }
-                    .foregroundColor(.red)
+                    .fontWeight(.semibold)
+                    .foregroundColor(.white)
                     .padding()
+                    .background(Color(red: 0.85, green: 0, blue: 0))
+                    .cornerRadius(15)
                 }
                 
                 Spacer()
             }
             .padding()
-            .navigationTitle("Podcast Loader")
+            .navigationTitle("The Podcast App")
             .background(
                 NavigationLink(
                     destination: Group {

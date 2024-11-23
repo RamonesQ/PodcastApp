@@ -17,10 +17,15 @@ struct DetailView: View {
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 10) {
-                Text(viewModel.podcast.title)
-                    .font(.title)
-                    .fontWeight(.bold)
-                
+                AsyncImage(url: URL(string: viewModel.podcast.imageURL)) { image in
+                    image
+                        .resizable()
+                        .aspectRatio(contentMode: .fit)
+                        .frame(height: 200)
+                } placeholder: {
+                    ProgressView()
+                }
+                .frame(maxWidth: .infinity, alignment: .center)
                 Text("Author: \(viewModel.podcast.author)")
                     .font(.subheadline)
                 
@@ -33,16 +38,6 @@ struct DetailView: View {
                         .foregroundColor(.red)
                 }
                 
-                AsyncImage(url: URL(string: viewModel.podcast.imageURL)) { image in
-                    image
-                        .resizable()
-                        .aspectRatio(contentMode: .fit)
-                        .frame(height: 200)
-                } placeholder: {
-                    ProgressView()
-                }
-                .padding(.vertical)
-                
                 Text("Description:")
                     .font(.headline)
                     .padding(.top)
@@ -54,13 +49,21 @@ struct DetailView: View {
                     .font(.headline)
                     .padding(.top)
                 
-                ForEach(viewModel.podcast.episodes) { episode in
-                    EpisodeRowView(episode: episode)
+                List {
+                    ForEach(viewModel.podcast.episodes) { episode in
+                        Button(action: {
+                            print("Episode tapped: \(episode.title)")
+                        }) {
+                            EpisodeRowView(episode: episode)
+                        }
+                    }
                 }
+                .listStyle(PlainListStyle())
+                .frame(height: CGFloat(viewModel.podcast.episodes.count) * 100)
             }
             .padding()
         }
-        .navigationTitle("Podcast Details")
+        .navigationTitle(viewModel.podcast.title)
     }
 }
 
@@ -70,11 +73,15 @@ struct EpisodeRowView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 5) {
             Text(episode.title)
-                .font(.headline)
+                .font(.subheadline)
+                .lineLimit(1)
+            Text("About: \(episode.description)")
+                .font(.caption2)
+                .lineLimit(2)
             Text("Duration: \(episode.duration)")
-                .font(.subheadline)
+                .font(.caption2)
             Text("Published: \(episode.publishDate)")
-                .font(.subheadline)
+                .font(.caption2)
         }
         .padding(.vertical, 5)
     }
