@@ -8,25 +8,34 @@
 import Foundation
 
 protocol PodcastStorageProtocol {
-    func savePodcast(_ podcast: Podcast) throws
-    func loadPodcast() throws -> Podcast
+    func savePodcast(_ podcast: Podcast, forURL url: String) throws
+    func loadPodcast(forURL url: String) throws -> Podcast
+    func getAllCachedPodcasts() -> [String: Podcast]
+    func clearCache()
 }
 
 class PodcastStorage: PodcastStorageProtocol {
     private let userDefaults = UserDefaults.standard
-    private let podcastKey = "lastPodcast"
+    private let cachedPodcastsKey = "cachedPodcasts"
     
-    func savePodcast(_ podcast: Podcast) throws {
+    private var cachedPodcasts: [String: Data] {
+        get { userDefaults.dictionary(forKey: cachedPodcastsKey) as? [String: Data] ?? [:] }
+        set { userDefaults.set(newValue, forKey: cachedPodcastsKey) }
+    }
+    
+    func savePodcast(_ podcast: Podcast, forURL url: String) throws {
         do {
             let encodedData = try JSONEncoder().encode(podcast)
-            userDefaults.set(encodedData, forKey: podcastKey)
+            var updatedCache = cachedPodcasts
+            updatedCache[url] = encodedData
+            cachedPodcasts = updatedCache
         } catch {
             throw PodcastAppError.encodingError
         }
     }
     
-    func loadPodcast() throws -> Podcast {
-        guard let data = userDefaults.data(forKey: podcastKey) else {
+    func loadPodcast(forURL url: String) throws -> Podcast {
+        guard let data = cachedPodcasts[url] else {
             throw PodcastAppError.dataNotFound
         }
         
@@ -35,5 +44,19 @@ class PodcastStorage: PodcastStorageProtocol {
         } catch {
             throw PodcastAppError.decodingError
         }
+    }
+    
+    func getAllCachedPodcasts() -> [String: Podcast] {
+        var result: [String: Podcast] = [:]
+        for (url, data) in cachedPodcasts {
+            if let podcast = try? JSONDecoder().decode(Podcast.self, from: data) {
+                result[url] = podcast
+            }
+        }
+        return result
+    }
+    
+    func clearCache() {
+        cachedPodcasts = [:]
     }
 }
