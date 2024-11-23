@@ -8,21 +8,18 @@
 import Foundation
 
 class DetailViewModel: ObservableObject {
-    @Published var episode: Episode?
-    @Published var language: String = ""
-    @Published var author: String = ""
+    @Published var podcast: Podcast?
     
     init() {
         loadLastPodcast()
     }
     
     private func loadLastPodcast() {
-        if let episodeData = UserDefaults.standard.data(forKey: "lastEpisode"),
-           let episode = try? JSONDecoder().decode(Episode.self, from: episodeData) {
-            self.episode = episode
+        if let podcastData = UserDefaults.standard.data(forKey: "lastPodcast"),
+           let podcast = try? JSONDecoder().decode(Podcast.self, from: podcastData) {
+            self.podcast = podcast
         }
-        language = UserDefaults.standard.string(forKey: "lastLanguage") ?? ""
-        author = UserDefaults.standard.string(forKey: "lastAuthor") ?? ""
     }
 }
+
 

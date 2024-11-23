@@ -7,7 +7,7 @@
 
 import Foundation
 
-struct Podcast: Identifiable {
+struct Podcast: Codable,  Identifiable {
     let id: UUID
     var title: String
     var description: String

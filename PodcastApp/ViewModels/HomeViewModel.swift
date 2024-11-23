@@ -35,10 +35,8 @@ class HomeViewModel: ObservableObject {
                     self?.error = error.localizedDescription
                 }
             } receiveValue: { [weak self] data in
-                if let (episode, language, author) = self?.parser.parse(data: data) {
-                    UserDefaults.standard.set(try? JSONEncoder().encode(episode), forKey: "lastEpisode")
-                    UserDefaults.standard.set(language, forKey: "lastLanguage")
-                    UserDefaults.standard.set(author, forKey: "lastAuthor")
+                if let podcast = self?.parser.parse(data: data) {
+                    UserDefaults.standard.set(try? JSONEncoder().encode(podcast), forKey: "lastPodcast")
                     self?.navigateToDetail = true
                 } else {
                     self?.error = "Failed to parse podcast data"
@@ -47,4 +45,3 @@ class HomeViewModel: ObservableObject {
             .store(in: &cancellables)
     }
 }
-

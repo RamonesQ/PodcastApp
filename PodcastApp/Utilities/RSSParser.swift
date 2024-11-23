@@ -10,16 +10,15 @@ import Foundation
 class RSSParser: NSObject, XMLParserDelegate {
     private var currentElement = ""
     private var currentValue = ""
-    private var episode: Episode?
-    private var language = ""
-    private var author = ""
+    private var podcast: Podcast?
+    private var currentEpisode: Episode?
 
-    func parse(data: Data) -> (Episode?, String, String)? {
+    func parse(data: Data) -> Podcast? {
         let parser = XMLParser(data: data)
         parser.delegate = self
         
         if parser.parse() {
-            return (episode, language, author)
+            return podcast
         } else {
             return nil
         }
@@ -29,8 +28,25 @@ class RSSParser: NSObject, XMLParserDelegate {
         currentElement = elementName
         currentValue = ""
         
-        if elementName == "item" && episode == nil {
-            episode = Episode()
+        switch elementName {
+        case "channel":
+            podcast = Podcast(id: UUID(), title: "", description: "", author: "", language: "", imageURL: "", explicit: false, episodes: [])
+        case "item":
+            currentEpisode = Episode()
+        case "itunes:image":
+            if let url = attributeDict["href"] {
+                if currentEpisode != nil {
+                    currentEpisode?.imageURL = url
+                } else {
+                    podcast?.imageURL = url
+                }
+            }
+        case "enclosure":
+            if let url = attributeDict["url"] {
+                currentEpisode?.audioURL = url
+            }
+        default:
+            break
         }
     }
 
@@ -42,17 +58,43 @@ class RSSParser: NSObject, XMLParserDelegate {
         let value = currentValue.trimmingCharacters(in: .whitespacesAndNewlines)
         
         switch elementName {
-        case "title": episode?.title = value
-        case "description": episode?.description = value
-        case "pubDate": episode?.publishDate = value
-        case "itunes:duration": episode?.duration = value
-        case "guid": episode?.guid = value
-        case "itunes:season": episode?.season = Int(value) ?? 0
-        case "itunes:episode": episode?.episodeNumber = Int(value) ?? 0
-        case "itunes:episodeType": episode?.episodeType = value
-        case "language": language = value
-        case "itunes:author": author = value
-        default: break
+        case "title":
+            if currentEpisode != nil {
+                currentEpisode?.title = value
+            } else {
+                podcast?.title = value
+            }
+        case "description":
+            if currentEpisode != nil {
+                currentEpisode?.description = value
+            } else {
+                podcast?.description = value
+            }
+        case "itunes:author":
+            podcast?.author = value
+        case "language":
+            podcast?.language = value
+        case "itunes:explicit":
+            podcast?.explicit = (value.lowercased() == "yes" || value.lowercased() == "true")
+        case "pubDate":
+            currentEpisode?.publishDate = value
+        case "itunes:duration":
+            currentEpisode?.duration = value
+        case "guid":
+            currentEpisode?.guid = value
+        case "itunes:season":
+            currentEpisode?.season = Int(value) ?? 0
+        case "itunes:episode":
+            currentEpisode?.episodeNumber = Int(value) ?? 0
+        case "itunes:episodeType":
+            currentEpisode?.episodeType = value
+        case "item":
+            if let episode = currentEpisode {
+                podcast?.episodes.append(episode)
+                currentEpisode = nil
+            }
+        default:
+            break
         }
     }
 }
