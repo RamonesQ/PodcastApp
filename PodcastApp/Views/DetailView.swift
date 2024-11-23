@@ -49,17 +49,17 @@ struct DetailView: View {
                     .font(.headline)
                     .padding(.top)
                 
-                List {
+                LazyVStack(alignment: .leading, spacing: 10) {
                     ForEach(viewModel.podcast.episodes) { episode in
                         Button(action: {
                             print("Episode tapped: \(episode.title)")
                         }) {
                             EpisodeRowView(episode: episode)
                         }
+                        .buttonStyle(PlainButtonStyle())
+                        Divider()
                     }
                 }
-                .listStyle(PlainListStyle())
-                .frame(height: CGFloat(viewModel.podcast.episodes.count) * 100)
             }
             .padding()
         }
