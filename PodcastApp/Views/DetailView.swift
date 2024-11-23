@@ -8,38 +8,36 @@
 import SwiftUI
 
 struct DetailView: View {
-    let episode: Episode
-    let language: String
-    let author: String
-    
+    @StateObject private var viewModel = DetailViewModel()
+
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 10) {
-                Text(episode.title)
+                Text(viewModel.episode?.title ?? "")
                     .font(.title)
                     .fontWeight(.bold)
-                
-                Text("Author: \(author)")
+
+                Text("Author: \(viewModel.author)")
                     .font(.subheadline)
-                
-                Text("Published: \(episode.publishDate)")
+
+                Text("Published: \(viewModel.episode?.publishDate ?? "")")
                     .font(.subheadline)
-                
-                Text("Duration: \(episode.duration)")
+
+                Text("Duration: \(viewModel.episode?.duration ?? "")")
                     .font(.subheadline)
-                
-                Text("Language: \(language)")
+
+                Text("Language: \(viewModel.language)")
                     .font(.subheadline)
-                
+
                 Text("Description:")
                     .font(.headline)
                     .padding(.top)
-                
-                Text(episode.description)
+
+                Text(viewModel.episode?.description ?? "")
                     .font(.body)
             }
             .padding()
         }
+        .navigationTitle("Podcast Details")
     }
 }
-

@@ -8,45 +8,42 @@
 import SwiftUI
 
 struct HomeView: View {
-    @State var rssLink: String = ""
-    @State private var episode: Episode?
-    @State private var language: String = ""
-    @State private var author: String = ""
-    @State private var showingDetail = false
-    
-    let parser = RSSParser()
-    
+    @StateObject private var viewModel = HomeViewModel()
+
     var body: some View {
         NavigationView {
             VStack {
-                TextField("Enter Podcast URL", text: $rssLink)
+                TextField("Enter Podcast URL", text: $viewModel.rssLink)
                     .textFieldStyle(RoundedBorderTextFieldStyle())
                     .padding()
-                
+
                 Button("Load Podcast") {
-                    loadPodcast()
+                    viewModel.loadPodcast()
                 }
                 .fontWeight(.semibold)
                 .foregroundColor(.white)
                 .padding()
                 .background(Color(red: 0, green: 0.53, blue: 0.84))
                 .cornerRadius(15)
-                
-                NavigationLink(destination: DetailView(episode: episode ?? Episode(), language: language, author: author), isActive: $showingDetail) {
+
+                if viewModel.isLoading {
+                    ProgressView()
+                }
+
+                if let error = viewModel.error {
+                    Text(error)
+                        .foregroundColor(.red)
+                }
+
+                NavigationLink(
+                    destination: DetailView(),
+                    isActive: $viewModel.navigateToDetail
+                ) {
                     EmptyView()
                 }
             }
             .padding()
             .navigationTitle("Podcast Loader")
-        }
-    }
-    
-    private func loadPodcast() {
-        if let (loadedEpisode, loadedLanguage, loadedAuthor) = parser.parseRSSSample() {
-            episode = loadedEpisode
-            language = loadedLanguage
-            author = loadedAuthor
-            showingDetail = true
         }
     }
 }
