@@ -8,12 +8,24 @@
 import SwiftUI
 
 struct HomeView: View {
+    @State var rssLink: String = ""
+    let parser = RSSParser()
+    
+    
     var body: some View {
         VStack {
-            Image(systemName: "globe")
-                .imageScale(.large)
-                .foregroundStyle(.tint)
-            Text("Hello, world!")
+            TextField("Enter Podcast URL", text: $rssLink)
+                .textFieldStyle(RoundedBorderTextFieldStyle())
+                .padding()
+            Button("Load Podcast") {
+                print(rssLink)
+                parser.parseRSSSample()
+            }
+            .fontWeight(.semibold)
+            .foregroundColor(.white)
+            .padding()
+            .background(Color(red: 0, green: 0.53, blue: 0.84))
+            .cornerRadius(15)
         }
         .padding()
     }
