@@ -7,66 +7,52 @@
 
 import Foundation
 
-class RSSParser {
-    func parseRSSSample() -> (Episode, String, String)? {
-        guard let path = Bundle.main.path(forResource: "rssSample", ofType: "rss") else {
-            print("Error: File not found")
-            return nil
-        }
+class RSSParser: NSObject, XMLParserDelegate {
+    private var currentElement = ""
+    private var currentValue = ""
+    private var episode: Episode?
+    private var language = ""
+    private var author = ""
+
+    func parse(data: Data) -> (Episode?, String, String)? {
+        let parser = XMLParser(data: data)
+        parser.delegate = self
         
-        do {
-            let data = try Data(contentsOf: URL(fileURLWithPath: path))
-            let parser = Foundation.XMLParser(data: data)
-            let delegate = RSSParserDelegate()
-            parser.delegate = delegate
-            
-            if parser.parse() {
-                print("Parsing successful")
-                let episode = delegate.createEpisode()
-                let language = delegate.parsedData["language"] ?? ""
-                let author = delegate.parsedData["itunes:author"] ?? ""
-                return (episode, language, author)
-            } else {
-                print("Error parsing XML")
-                return nil
-            }
-        } catch {
-            print("Error reading file: \(error)")
+        if parser.parse() {
+            return (episode, language, author)
+        } else {
             return nil
         }
     }
-}
 
-class RSSParserDelegate: NSObject, XMLParserDelegate {
-    var currentElement = ""
-    var currentValue = ""
-    var parsedData: [String: String] = [:]
-    
     func parser(_ parser: XMLParser, didStartElement elementName: String, namespaceURI: String?, qualifiedName qName: String?, attributes attributeDict: [String : String] = [:]) {
         currentElement = elementName
         currentValue = ""
+        
+        if elementName == "item" && episode == nil {
+            episode = Episode()
+        }
     }
-    
+
     func parser(_ parser: XMLParser, foundCharacters string: String) {
         currentValue += string
     }
-    
+
     func parser(_ parser: XMLParser, didEndElement elementName: String, namespaceURI: String?, qualifiedName qName: String?) {
-        if !currentValue.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-            parsedData[elementName] = currentValue.trimmingCharacters(in: .whitespacesAndNewlines)
+        let value = currentValue.trimmingCharacters(in: .whitespacesAndNewlines)
+        
+        switch elementName {
+        case "title": episode?.title = value
+        case "description": episode?.description = value
+        case "pubDate": episode?.publishDate = value
+        case "itunes:duration": episode?.duration = value
+        case "guid": episode?.guid = value
+        case "itunes:season": episode?.season = Int(value) ?? 0
+        case "itunes:episode": episode?.episodeNumber = Int(value) ?? 0
+        case "itunes:episodeType": episode?.episodeType = value
+        case "language": language = value
+        case "itunes:author": author = value
+        default: break
         }
-    }
-    
-    func createEpisode() -> Episode {
-        return Episode(
-            title: parsedData["itunes:title"] ?? "",
-            description: parsedData["description"] ?? "",
-            publishDate: parsedData["pubDate"] ?? "",
-            duration: parsedData["itunes:duration"] ?? "",
-            guid: parsedData["guid"] ?? "",
-            season: Int(parsedData["itunes:season"] ?? "") ?? 0,
-            episodeNumber: Int(parsedData["itunes:episode"] ?? "") ?? 0,
-            episodeType: parsedData["itunes:episodeType"] ?? ""
-        )
     }
 }
