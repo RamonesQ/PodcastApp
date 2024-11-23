@@ -15,31 +15,32 @@ class HomeViewModel: ObservableObject {
     @Published var navigateToDetail: Bool = false
     
     private var cancellables = Set<AnyCancellable>()
-    private let parser = RSSParser()
+    private let podcastService: PodcastServiceProtocol
+    private let storage: PodcastStorageProtocol
+    
+    init(podcastService: PodcastServiceProtocol = PodcastService(),
+         storage: PodcastStorageProtocol = PodcastStorage()) {
+        self.podcastService = podcastService
+        self.storage = storage
+    }
     
     func loadPodcast() {
-        guard let url = URL(string: rssLink) else {
-            error = "Invalid URL"
-            return
-        }
-
         isLoading = true
         error = nil
 
-        URLSession.shared.dataTaskPublisher(for: url)
-            .map(\.data)
+        podcastService.fetchPodcast(from: rssLink)
             .receive(on: DispatchQueue.main)
             .sink { [weak self] completion in
                 self?.isLoading = false
                 if case .failure(let error) = completion {
                     self?.error = error.localizedDescription
                 }
-            } receiveValue: { [weak self] data in
-                if let podcast = self?.parser.parse(data: data) {
-                    UserDefaults.standard.set(try? JSONEncoder().encode(podcast), forKey: "lastPodcast")
+            } receiveValue: { [weak self] podcast in
+                do {
+                    try self?.storage.savePodcast(podcast)
                     self?.navigateToDetail = true
-                } else {
-                    self?.error = "Failed to parse podcast data"
+                } catch {
+                    self?.error = error.localizedDescription
                 }
             }
             .store(in: &cancellables)

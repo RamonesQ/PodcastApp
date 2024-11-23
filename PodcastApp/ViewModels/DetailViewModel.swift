@@ -9,17 +9,24 @@ import Foundation
 
 class DetailViewModel: ObservableObject {
     @Published var podcast: Podcast?
+    @Published var error: String?
     
-    init() {
+    private let storage: PodcastStorageProtocol
+    
+    init(storage: PodcastStorageProtocol = PodcastStorage()) {
+        self.storage = storage
         loadLastPodcast()
     }
     
     private func loadLastPodcast() {
-        if let podcastData = UserDefaults.standard.data(forKey: "lastPodcast"),
-           let podcast = try? JSONDecoder().decode(Podcast.self, from: podcastData) {
-            self.podcast = podcast
+        do {
+            podcast = try storage.loadPodcast()
+        } catch {
+            if let podcastError = error as? PodcastAppError {
+                self.error = podcastError.localizedDescription
+            } else {
+                self.error = PodcastAppError.unknownError.localizedDescription
+            }
         }
     }
 }
-
-

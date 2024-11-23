@@ -7,7 +7,12 @@
 
 import Foundation
 
-class RSSParser: NSObject, XMLParserDelegate {
+
+protocol RSSParserProtocol {
+    func parse(data: Data) -> Podcast?
+}
+
+class RSSParser: NSObject, XMLParserDelegate, RSSParserProtocol {
     private var currentElement = ""
     private var currentValue = ""
     private var podcast: Podcast?
