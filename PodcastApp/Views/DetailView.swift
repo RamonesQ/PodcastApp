@@ -51,9 +51,7 @@ struct DetailView: View {
                 
                 LazyVStack(alignment: .leading, spacing: 10) {
                     ForEach(viewModel.podcast.episodes) { episode in
-                        Button(action: {
-                            print("Episode tapped: \(episode.title)")
-                        }) {
+                        NavigationLink(destination: PlayerView(podcast: viewModel.podcast, episode: episode)) {
                             EpisodeRowView(episode: episode)
                         }
                         .buttonStyle(PlainButtonStyle())
