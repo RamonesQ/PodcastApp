@@ -13,6 +13,8 @@ struct PlayerView: View {
     let episode: Episode
     @StateObject private var audioPlayer = AudioPlayer()
     @State private var currentEpisodeIndex: Int
+    @State private var seekValue: Double = 0
+    @State private var isSeeking = false
     
     init(podcast: Podcast, episode: Episode) {
         self.podcast = podcast
@@ -42,6 +44,21 @@ struct PlayerView: View {
                 
                 Text(episode.description)
                     .font(.body)
+                VStack {
+                    Slider(value: $seekValue, in: 0...audioPlayer.duration) { editing in
+                        isSeeking = editing
+                        if !editing {
+                            audioPlayer.seek(to: seekValue)
+                        }
+                    }
+                    
+                    HStack {
+                        Text(formatTime(seekValue))
+                        Spacer()
+                        Text(formatTime(audioPlayer.duration))
+                    }
+                    .font(.caption)
+                }
                 
                 HStack {
                     Button(action: previousEpisode) {
@@ -59,7 +76,6 @@ struct PlayerView: View {
                             .aspectRatio(contentMode: .fit)
                             .frame(width: 50, height: 50)
                     }
-                    
                     Spacer()
                     
                     Button(action: nextEpisode) {
@@ -75,6 +91,11 @@ struct PlayerView: View {
         }
         .navigationTitle("Episode Player")
         .navigationBarTitleDisplayMode(.inline)
+        .onReceive(audioPlayer.$currentTime) { time in
+            if !isSeeking {
+                seekValue = time
+            }
+        }
     }
     
     private func previousEpisode() {
@@ -92,6 +113,12 @@ struct PlayerView: View {
     private func playCurrentEpisode() {
         let newEpisode = podcast.episodes[currentEpisodeIndex]
         audioPlayer.play(url: newEpisode.audioURL)
+    }
+    
+    private func formatTime(_ time: Double) -> String {
+        let minutes = Int(time) / 60
+        let seconds = Int(time) % 60
+        return String(format: "%d:%02d", minutes, seconds)
     }
 }
 
