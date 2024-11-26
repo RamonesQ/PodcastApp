@@ -9,11 +9,12 @@ import SwiftUI
 
 struct DetailView: View {
     @StateObject private var viewModel: DetailViewModel
-    
+    @State private var isDescriptionExpanded: Bool = false
+
     init(podcast: Podcast) {
         _viewModel = StateObject(wrappedValue: DetailViewModel(podcast: podcast))
     }
-    
+
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 10) {
@@ -28,22 +29,24 @@ struct DetailView: View {
                 .frame(maxWidth: .infinity, alignment: .center)
                 Text("Author: \(viewModel.podcast.author)")
                     .font(.subheadline)
-                
                 Text("Language: \(viewModel.podcast.language)")
                     .font(.subheadline)
-                
                 if viewModel.podcast.explicit {
                     Text("Explicit Content")
                         .font(.subheadline)
                         .foregroundColor(.red)
                 }
-                
                 Text("Description:")
                     .font(.headline)
                     .padding(.top)
-                
                 Text(viewModel.podcast.description)
                     .font(.body)
+                    .frame(height: isDescriptionExpanded ? nil : 100)
+                    .onTapGesture {
+                        withAnimation {
+                            isDescriptionExpanded.toggle()
+                        }
+                    }
                 
                 Text("Episodes:")
                     .font(.headline)

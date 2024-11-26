@@ -13,76 +13,74 @@ struct PlayerView: View {
     init(podcast: Podcast, episode: Episode) {
         _viewModel = StateObject(wrappedValue: PlayerViewModel(podcast: podcast, episode: episode))
     }
-    
+
     var body: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: 20) {
-                Text(viewModel.podcast.title)
-                    .frame(maxWidth: .infinity, alignment: .center)
-                    .font(.subheadline)
-                
-                AsyncImage(url: URL(string: viewModel.currentEpisode.imageURL ?? viewModel.podcast.imageURL)) { image in
-                    image
-                        .resizable()
-                        .aspectRatio(contentMode: .fit)
-                        .frame(height: 200)
-                } placeholder: {
-                    ProgressView()
-                }
-                .frame(maxWidth: .infinity, alignment: .center)
-                
-                Text(viewModel.currentEpisode.title)
-                    .font(.headline)
-                
-                Text(viewModel.currentEpisode.description)
-                    .font(.body)
-                
-                VStack {
-                    Slider(value: $viewModel.seekValue, in: 0...viewModel.duration) { editing in
-                        viewModel.isSeeking = editing
-                        if !editing {
-                            viewModel.seek(to: viewModel.seekValue)
-                        }
-                    }
-                    
-                    HStack {
-                        Text(TimeFormatter.formatTime(viewModel.currentTime))
-                        Spacer()
-                        Text(TimeFormatter.formatTime(viewModel.duration))
-                    }
-                    .font(.caption)
-                }
-                
-                HStack {
-                    Button(action: viewModel.previousEpisode) {
-                        Image(systemName: "backward.fill")
-                    }
-                    .disabled(viewModel.currentEpisodeIndex == 0)
-                    
-                    Spacer()
-                    
-                    Button(action: viewModel.togglePlayPause) {
-                        Image(systemName: viewModel.isPlaying ? "pause.circle.fill" : "play.circle.fill")
+        VStack {
+            ScrollView {
+                VStack(alignment: .leading, spacing: 20) {
+                    Text(viewModel.podcast.title)
+                        .frame(maxWidth: .infinity, alignment: .center)
+                        .font(.subheadline)
+                    AsyncImage(url: URL(string: viewModel.currentEpisode.imageURL ?? viewModel.podcast.imageURL)) { image in
+                        image
                             .resizable()
                             .aspectRatio(contentMode: .fit)
-                            .frame(width: 50, height: 50)
+                            .frame(height: 200)
+                    } placeholder: {
+                        ProgressView()
                     }
+                    .frame(maxWidth: .infinity, alignment: .center)
                     
-                    Spacer()
+                    Text(viewModel.currentEpisode.title)
+                        .font(.headline)
                     
-                    Button(action: viewModel.nextEpisode) {
-                        Image(systemName: "forward.fill")
-                    }
-                    .disabled(viewModel.currentEpisodeIndex == viewModel.podcast.episodes.count - 1)
+                    Text(viewModel.currentEpisode.description)
+                        .font(.body)
                 }
                 .padding()
-                .background(Color.secondary.opacity(0.1))
-                .cornerRadius(10)
+            }
+            .navigationBarTitleDisplayMode(.inline)
+            .onAppear(perform: viewModel.onAppear)
+            .onDisappear(perform: viewModel.onDisappear)
+        }
+        VStack {
+            VStack {
+                Slider(value: $viewModel.seekValue, in: 0...viewModel.duration) { editing in
+                    viewModel.isSeeking = editing
+                    if !editing {
+                        viewModel.seek(to: viewModel.seekValue)
+                    }
+                }
+                HStack {
+                    Text(TimeFormatter.formatTime(viewModel.currentTime))
+                    Spacer()
+                    Text(TimeFormatter.formatTime(viewModel.duration))
+                }
+                .font(.caption)
+            }
+            HStack {
+                Button(action: viewModel.previousEpisode) {
+                    Image(systemName: "backward.fill")
+                }
+                .disabled(viewModel.currentEpisodeIndex == 0)
+                Spacer()
+                Button(action: viewModel.togglePlayPause) {
+                    Image(systemName: viewModel.isPlaying ? "pause.circle.fill" : "play.circle.fill")
+                        .resizable()
+                        .aspectRatio(contentMode: .fit)
+                        .frame(width: 50, height: 50)
+                }
+                Spacer()
+                
+                Button(action: viewModel.nextEpisode) {
+                    Image(systemName: "forward.fill")
+                }
+                .disabled(viewModel.currentEpisodeIndex == viewModel.podcast.episodes.count - 1)
             }
             .padding()
+            .background(Color.secondary.opacity(0.1))
+            .cornerRadius(10)
         }
-        .navigationBarTitleDisplayMode(.inline)
-        .onAppear(perform: viewModel.onAppear)
-        .onDisappear(perform: viewModel.onDisappear)
+        .padding()
     }
 }
