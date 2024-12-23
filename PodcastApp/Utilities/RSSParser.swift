@@ -7,7 +7,6 @@
 
 import Foundation
 
-
 protocol RSSParserProtocol {
     func parse(data: Data) -> Podcast?
 }
@@ -21,35 +20,24 @@ class RSSParser: NSObject, XMLParserDelegate, RSSParserProtocol {
     func parse(data: Data) -> Podcast? {
         let parser = XMLParser(data: data)
         parser.delegate = self
-        
-        if parser.parse() {
-            return podcast
-        } else {
-            return nil
-        }
+        return parser.parse() ? podcast : nil
     }
+
+    // MARK: - XMLParserDelegate
 
     func parser(_ parser: XMLParser, didStartElement elementName: String, namespaceURI: String?, qualifiedName qName: String?, attributes attributeDict: [String : String] = [:]) {
         currentElement = elementName
         currentValue = ""
-        
+
         switch elementName {
         case "channel":
-            podcast = Podcast(id: UUID(), title: "", description: "", author: "", language: "", imageURL: "", explicit: false, episodes: [])
+            initializePodcast()
         case "item":
             currentEpisode = Episode()
         case "itunes:image":
-            if let url = attributeDict["href"] {
-                if currentEpisode != nil {
-                    currentEpisode?.imageURL = url
-                } else {
-                    podcast?.imageURL = url
-                }
-            }
+            handleImageURL(attributeDict["href"])
         case "enclosure":
-            if let url = attributeDict["url"] {
-                currentEpisode?.audioURL = url
-            }
+            currentEpisode?.audioURL = attributeDict["url"] ?? ""
         default:
             break
         }
@@ -61,45 +49,100 @@ class RSSParser: NSObject, XMLParserDelegate, RSSParserProtocol {
 
     func parser(_ parser: XMLParser, didEndElement elementName: String, namespaceURI: String?, qualifiedName qName: String?) {
         let value = currentValue.trimmingCharacters(in: .whitespacesAndNewlines)
-        
+
+        switch elementName {
+        case "title", "description":
+            setPodcastOrEpisodeValue(for: elementName, value: value)
+        case "itunes:author", "language":
+            setPodcastValue(for: elementName, value: value)
+        case "itunes:explicit":
+            podcast?.explicit = value.lowercased() == "yes" || value.lowercased() == "true"
+        case "pubDate", "itunes:duration", "guid", "itunes:episodeType":
+            setEpisodeValue(for: elementName, value: value)
+        case "itunes:season", "itunes:episode":
+            setEpisodeIntValue(for: elementName, value: value)
+        case "item":
+            finishCurrentEpisode()
+        default:
+            break
+        }
+    }
+
+    // MARK: - Helper Methods
+
+    private func initializePodcast() {
+        podcast = Podcast()
+    }
+
+    private func handleImageURL(_ url: String?) {
+        if let url = url {
+            if currentEpisode != nil {
+                currentEpisode?.imageURL = url
+            } else {
+                podcast?.imageURL = url
+            }
+        }
+    }
+
+    private func setPodcastOrEpisodeValue(for elementName: String, value: String) {
+        if currentEpisode != nil {
+            setEpisodeValue(for: elementName, value: value)
+        } else {
+            setPodcastValue(for: elementName, value: value)
+        }
+    }
+
+    private func setPodcastValue(for elementName: String, value: String) {
         switch elementName {
         case "title":
-            if currentEpisode != nil {
-                currentEpisode?.title = value
-            } else {
-                podcast?.title = value
-            }
+            podcast?.title = value
         case "description":
-            if currentEpisode != nil {
-                currentEpisode?.description = value
-            } else {
-                podcast?.description = value
-            }
+            podcast?.description = value
         case "itunes:author":
             podcast?.author = value
         case "language":
             podcast?.language = value
-        case "itunes:explicit":
-            podcast?.explicit = (value.lowercased() == "yes" || value.lowercased() == "true")
+        default:
+            break
+        }
+    }
+
+    private func setEpisodeValue(for elementName: String, value: String) {
+        switch elementName {
+        case "title":
+            currentEpisode?.title = value
+        case "description":
+            currentEpisode?.description = value
         case "pubDate":
             currentEpisode?.publishDate = value
         case "itunes:duration":
             currentEpisode?.duration = value
         case "guid":
             currentEpisode?.guid = value
-        case "itunes:season":
-            currentEpisode?.season = Int(value) ?? 0
-        case "itunes:episode":
-            currentEpisode?.episodeNumber = Int(value) ?? 0
         case "itunes:episodeType":
             currentEpisode?.episodeType = value
-        case "item":
-            if let episode = currentEpisode {
-                podcast?.episodes.append(episode)
-                currentEpisode = nil
-            }
         default:
             break
+        }
+    }
+
+    private func setEpisodeIntValue(for elementName: String, value: String) {
+        if let intValue = Int(value) {
+            switch elementName {
+            case "itunes:season":
+                currentEpisode?.season = intValue
+            case "itunes:episode":
+                currentEpisode?.episodeNumber = intValue
+            default:
+                break
+            }
+        }
+    }
+
+    private func finishCurrentEpisode() {
+        if let episode = currentEpisode {
+            podcast?.episodes.append(episode)
+            currentEpisode = nil
         }
     }
 }
