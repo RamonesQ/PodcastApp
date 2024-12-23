@@ -97,7 +97,7 @@ class RSSParser: NSObject, XMLParserDelegate, RSSParserProtocol {
         case "title":
             podcast?.title = value
         case "description":
-            podcast?.description = value
+            podcast?.description = StringUtils.stripHTMLTags(from: value)
         case "itunes:author":
             podcast?.author = value
         case "language":
@@ -112,7 +112,7 @@ class RSSParser: NSObject, XMLParserDelegate, RSSParserProtocol {
         case "title":
             currentEpisode?.title = value
         case "description":
-            currentEpisode?.description = value
+            currentEpisode?.description = StringUtils.stripHTMLTags(from: value)
         case "pubDate":
             currentEpisode?.publishDate = value
         case "itunes:duration":
