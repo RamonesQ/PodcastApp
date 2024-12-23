@@ -47,18 +47,24 @@ struct DetailView: View {
                             isDescriptionExpanded.toggle()
                         }
                     }
-                
+
                 Text("Episodes:")
                     .font(.headline)
                     .padding(.top)
-                
                 LazyVStack(alignment: .leading, spacing: 10) {
-                    ForEach(viewModel.podcast.episodes) { episode in
+                    ForEach(viewModel.displayedEpisodes) { episode in
                         NavigationLink(destination: PlayerView(podcast: viewModel.podcast, episode: episode)) {
                             EpisodeRowView(episode: episode)
                         }
                         .buttonStyle(PlainButtonStyle())
                         Divider()
+                    }
+                    if viewModel.hasMoreEpisodes {
+                        ProgressView()
+                            .frame(maxWidth: .infinity)
+                            .onAppear {
+                                viewModel.loadMoreEpisodes()
+                            }
                     }
                 }
             }
