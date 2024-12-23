@@ -21,13 +21,16 @@ struct PlayerView: View {
                     Text(viewModel.podcast.title)
                         .frame(maxWidth: .infinity, alignment: .center)
                         .font(.subheadline)
-                    AsyncImage(url: URL(string: viewModel.currentEpisode.imageURL ?? viewModel.podcast.imageURL)) { image in
-                        image
-                            .resizable()
-                            .aspectRatio(contentMode: .fit)
-                            .frame(height: 200)
-                    } placeholder: {
-                        ProgressView()
+                    AsyncImage(url: URL(string: viewModel.currentEpisode.imageURL ?? viewModel.podcast.imageURL)) { status in
+                        switch status {
+                        case .success(let image):
+                            image
+                                .resizable()
+                                .aspectRatio(contentMode: .fit)
+                                .frame(height: 200)
+                        default:
+                            EmptyView()
+                        }
                     }
                     .frame(maxWidth: .infinity, alignment: .center)
                     

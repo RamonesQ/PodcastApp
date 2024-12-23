@@ -9,14 +9,25 @@ import SwiftUI
 
 struct HomeView: View {
     @StateObject private var viewModel = HomeViewModel()
-    
+
     var body: some View {
-        NavigationView {
+        NavigationStack {
             VStack {
-                TextField("Enter Podcast URL", text: $viewModel.rssLink)
-                    .textFieldStyle(RoundedBorderTextFieldStyle())
-                    .padding()
-                
+                HStack {
+                    TextField("Enter Podcast URL", text: $viewModel.rssLink)
+                        .textFieldStyle(RoundedBorderTextFieldStyle())
+
+                    if !viewModel.rssLink.isEmpty {
+                        Button(action: {
+                            viewModel.rssLink = ""
+                        }) {
+                            Image(systemName: "xmark.circle.fill")
+                                .foregroundColor(.gray)
+                        }
+                    }
+                }
+                .padding()
+
                 Button("Load Podcast") {
                     viewModel.loadPodcast()
                 }
@@ -26,23 +37,23 @@ struct HomeView: View {
                 .background(Color(red: 0, green: 0.53, blue: 0.84))
                 .cornerRadius(15)
                 .disabled(viewModel.isLoading)
-                
+
                 if viewModel.isLoading {
                     ProgressView()
                         .padding()
                 }
-                
+
                 if let error = viewModel.error {
                     Text(error)
                         .foregroundColor(.red)
                         .padding()
                 }
-                
+
                 if !viewModel.cachedPodcasts.isEmpty {
                     Text("Previous searches")
                         .font(.headline)
                         .padding(.top)
-                    
+
                     List {
                         ForEach(Array(viewModel.cachedPodcasts.keys), id: \.self) { url in
                             if let podcast = viewModel.cachedPodcasts[url] {
@@ -65,7 +76,7 @@ struct HomeView: View {
                     }
                     .listStyle(PlainListStyle())
                     .frame(height: 300)
-                    
+
                     Button("Clear Cache") {
                         viewModel.clearCache()
                     }
@@ -75,23 +86,17 @@ struct HomeView: View {
                     .background(Color(red: 0.85, green: 0, blue: 0))
                     .cornerRadius(15)
                 }
-                
+
                 Spacer()
             }
             .padding()
             .navigationTitle("The Podcast App")
-            .background(
-                NavigationLink(
-                    destination: Group {
-                        if let podcast = viewModel.selectedPodcast {
-                            DetailView(podcast: podcast)
-                        }
-                    },
-                    isActive: $viewModel.navigateToDetail
-                ) {
-                    EmptyView()
+            .navigationDestination(isPresented: $viewModel.navigateToDetail) {
+                if let podcast = viewModel.selectedPodcast {
+                    DetailView(podcast: podcast)
                 }
-            )
+            }
         }
     }
 }
+

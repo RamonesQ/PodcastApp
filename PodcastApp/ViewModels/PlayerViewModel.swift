@@ -51,7 +51,11 @@ class PlayerViewModel: ObservableObject {
     func togglePlayPause() {
         audioPlayer.togglePlayPause(url: currentEpisode.audioURL)
     }
-    
+
+    func onAppear() {
+        audioPlayer.play(url: currentEpisode.audioURL)
+    }
+
     func seek(to value: Double) {
         audioPlayer.seek(to: value)
     }
@@ -68,17 +72,13 @@ class PlayerViewModel: ObservableObject {
         updateCurrentEpisode()
     }
     
+    func onDisappear() {
+        audioPlayer.pause()
+    }
+
     private func updateCurrentEpisode() {
         currentEpisode = podcast.episodes[currentEpisodeIndex]
         audioPlayer.play(url: currentEpisode.audioURL)
-    }
-    
-    func onAppear() {
-        audioPlayer.play(url: currentEpisode.audioURL)
-    }
-    
-    func onDisappear() {
-        audioPlayer.pause()
     }
 }
 
